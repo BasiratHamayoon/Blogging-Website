@@ -1,0 +1,30 @@
+meta {
+  name: Post
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:7000/api/post/new_post
+  body: multipartForm
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4MGE1MDNlMzVjMzE0MzI5OGViMjYwYiIsImlhdCI6MTc0NTUwNjQyOCwiZXhwIjoxNzQ2MTExMjI4fQ.Vj9E7DqgHUItwhxbjkASX9mMKxQ88iYLmSWzWr3c39U
+}
+
+body:json {
+  {
+    "title": "Web Development",
+    "description":"My app in react.js",
+    "tag":"Hello"
+  }
+}
+
+body:multipart-form {
+  title: web development @contentType(text)
+  description: react app @contentType(text)
+  tags: web
+  image:  @contentType(file)
+}
