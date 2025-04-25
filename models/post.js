@@ -14,9 +14,10 @@ const postSchema = new mongoose.Schema({
     image: {
         type: String
     },
-    tags: {
-        type: String,
-    },
+    tags: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "tags"
+    }],
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "users"

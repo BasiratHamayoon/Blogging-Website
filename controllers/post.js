@@ -3,13 +3,14 @@ const postModel  = require("../models/post.js");
 const { mongoose } = require("mongoose");
 const cloudinary = require("cloudinary").v2;
 const path = require('path')
+const catchAsync = require('../utils/catchAsync.js');
+const appError = require('../utils/appError.js')
 
-const newPost = async (req, res) => {
-//   console.log(req.file);
-//   const tags = JSON.parse(req.body.tags);
-//   console.log(tags);
+const newPost = catchAsync (async (req, res, next) =>  {
+  console.log(req.file);
+  const tags = JSON.parse(req.body.tags);
+  console.log(tags);
 
-  try {
     if (!req.user.id) {
       return res.json({
         message: "required user id",
@@ -20,18 +21,17 @@ const newPost = async (req, res) => {
       title: req.body.title,
     });
     if (isExit) {
-      return res.status(409).json({
-        message: "Already Exist this post",
-      });
+      return next(appError("Post already Exists!"));
     }
 
     const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "VoxHive", // This should be correct, but ensure no typos in folder name
+        folder: "VoxHive",
       });
 
     const createPost = await postModel.create({
       title: req.body.title,
       description: req.body.description,
+      tags,
       slug: slugify(req.body.title, {
         lower: true,
       }),
@@ -43,9 +43,25 @@ const newPost = async (req, res) => {
       message: "Post Uploaded successfully!",
       data: createPost,
     });
-  } catch (error) {
-    console.log(error.message);
-  }
-};
+});
 
-module.exports = { newPost }
+const getPost = catchAsync(async(req, res, next) => {
+  console.log("Decoded User ID:", req.user.id);
+  if(!req.user.id) {
+    return next(appError("Required User Id to Find this Post!"))
+  }
+  const allPost = await postModel.find({
+    author: req.user.id
+  }).populate({
+    path: "author",
+    select: "userName",
+    options: { limit: 2 }
+  });
+  res.json({
+    message: "All Post from this USer!",
+    data: allPost
+  });
+});
+
+
+module.exports = { newPost, getPost }
