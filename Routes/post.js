@@ -1,5 +1,5 @@
 const express = require("express");
-const { newPost, getPost } = require('../controllers/post.js')
+const { newPost, getPost, getAllPostForGuestUser, getAllPostForRegisterUser } = require('../controllers/post.js')
 const { verify } = require("../middlewares/authMiddleware.js");
 const multer = require("multer");
 const path = require("path");
@@ -29,5 +29,7 @@ const upload = multer({ storage: storage });
 
 router.post("/new-post", verify, upload.single("file"), newPost);
 router.get("/get-post", verify, getPost);
+router.get("/get-post-for-guest-user", getAllPostForGuestUser);
+router.get('/get-post-for-register-user', verify, getAllPostForRegisterUser);
 
 module.exports = router;

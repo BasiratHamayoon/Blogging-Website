@@ -63,5 +63,84 @@ const getPost = catchAsync(async(req, res, next) => {
   });
 });
 
+const getAllPostForGuestUser = catchAsync(async(req, res) => {
+  const allPost = await postModel.find();
+  if(allPost.length > 0) {
+    return res.status(200).json({
+      message: "All Posts",
+      data: allPost,
+      success: true
+    });
+  }
+  next(appError("Posts Not Found!", 404))
+});
 
-module.exports = { newPost, getPost }
+const getAllPostForRegisterUser = catchAsync(async(req, res, next) => {
+  const { id } = req.user;
+  console.log(id);
+  const allPost = await postModel.aggregate([
+    {
+      $match: {
+        isActive: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "tags",
+        localField: "tags",
+        foreignField: "_id",
+        as: "allTags"
+      },
+    },
+    {
+      $lookup: {
+        from: "bookMarks",
+        let: { postId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$post", "$$postId"] },
+                  { $eq: ["$user", new mongoose.Types.ObjectId(id)] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "bookmarkByUser",
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        let: { postId: "$_id"},
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$post", "$$postId"] },
+                  { $eq: ["$user", new mongoose.Types.ObjectId(id)] },
+                ],
+              },
+            },
+          },
+        ],
+        as: "likeByUser"
+      },
+    },
+    {
+      $addFields: {
+        isBookMark: { $gt: [{ $size: "$bookmarkByUser" }, 0] },
+        isLike: { $gt: [{ $size: "$likeByUser" }, 0]  }
+      },
+    },
+  ]);
+  res.status(200).json({
+    message: "All Posts",
+    data: allPost
+  })
+})
+
+module.exports = { newPost, getPost, getAllPostForGuestUser, getAllPostForRegisterUser }
